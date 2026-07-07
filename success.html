@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>提交成功 · 条目编辑器</title>
+  <link rel="icon" href="./assets/bird.gif" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="success-page">
+  <main class="success-main">
+    <img class="success-bird" src="./assets/bird.gif" alt="" />
+    <h1>感谢你对小提漫画库的添砖加瓦！</h1>
+    <div class="success-id">提交编号：<span id="successId">TD-----</span></div>
+    <p>已提交至后台审核，如未选择匿名，通过后会记录在主站贡献页中</p>
+    <a class="success-link" href="./index.html">返回编辑器</a>
+  </main>
+  <script>
+    const id = new URLSearchParams(location.search).get('id') || 'TD-----';
+    document.getElementById('successId').textContent = id;
+    const colors=['#ffd9e6','#cde9ff','#d6f5df','#fff0b8','#e8d8ff','#ffcfc7'];
+    for(let i=0;i<70;i++){
+      const p=document.createElement('i');
+      p.className='confetti';
+      p.style.left=Math.random()*100+'vw';
+      p.style.background=colors[i%colors.length];
+      p.style.animationDelay=(Math.random()*1.4)+'s';
+      p.style.transform='rotate('+Math.random()*360+'deg)';
+      p.style.borderRadius=(i%3===0?'50%':'2px');
+      document.body.appendChild(p);
+    }
+  </script>
+</body>
+</html>

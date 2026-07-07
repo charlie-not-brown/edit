@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>贡献日志 · 条目编辑器</title>
+  <link rel="icon" href="./assets/bird.gif">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img class="bird-img" src="./assets/bird.gif" alt="" /><span>贡献日志</span></div>
+  <nav class="nav"><a href="./index.html">编辑界面</a><a href="./admin.html">审核后台</a><a class="active" href="./contributors.html">贡献日志</a></nav>
+</header>
+<main class="page narrow">
+  <h1>贡献日志</h1>
+  <p class="hint">这里显示所有已通过的新增/修改/删除记录；匿名投稿也会进入日志。主站贡献页可以另外展示署名贡献者，这里只是编辑日志。</p>
+  <div id="logList" class="log-list"></div>
+</main>
+<script>
+const KEY='td_contrib_submissions_v5';
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function getSubs(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return []}}
+function setSubs(v){localStorage.setItem(KEY,JSON.stringify(v))}
+function target(ch){return ch.kind==='new'?(ch.newData?.name||'未命名新条目'):(ch.oldData?.name||ch.targetId||'未命名条目')}
+function action(ch){return ch.kind==='new'?'新增':(ch.kind==='delete'?'删除':'修改')}
+function who(s){return s.contributor?.anonymous?'匿名贡献者':(s.contributor?.name||'未署名贡献者')}
+function collectLogs(){
+  const logs=[];
+  getSubs().forEach((s,si)=>{(s.changes||[]).forEach((ch,ci)=>{if(ch.status==='approved')logs.push({sub:s,ch,si,ci})})});
+  return logs;
+}
+function render(){
+  const logs=collectLogs();
+  $('#logList').innerHTML=logs.length?logs.map(({sub,ch,si,ci})=>`<div class="log-card"><div class="log-avatar">${sub.contributor?.avatar?`<img class="avatar" src="${esc(sub.contributor.avatar)}" onerror="this.style.display='none'">`:'<span>✧</span>'}</div><div class="log-main"><div><b>${esc(who(sub))}</b> ${action(ch)}了 <b>${esc(target(ch))}</b></div><div class="hint">${esc(ch.changeId||sub.id+'-'+(ci+1))} · ${new Date(ch.reviewedAt||sub.createdAt).toLocaleString()}${ch.kind==='edit'?' · 字段：'+(ch.fields||[]).join('、'):''}</div></div><button class="mini-btn danger log-delete" data-si="${si}" data-ci="${ci}">删除</button></div>`).join(''):'<div class="sub-card muted">暂无已通过贡献。</div>';
+  document.querySelectorAll('.log-delete').forEach(btn=>btn.onclick=()=>{
+    if(!confirm('确认删除这条贡献日志？这只会清理测试记录，不会影响你的 Notion。')) return;
+    const subs=getSubs();
+    const si=Number(btn.dataset.si), ci=Number(btn.dataset.ci);
+    if(subs[si] && Array.isArray(subs[si].changes)){
+      subs[si].changes.splice(ci,1);
+      if(!subs[si].changes.length) subs.splice(si,1);
+      setSubs(subs);
+      render();
+    }
+  });
+}
+render();
+</script>
+</body>
+</html>

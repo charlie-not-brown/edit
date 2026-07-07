@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>条目编辑器</title>
+  <link rel="icon" href="./assets/bird.gif" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img class="bird-img" src="./assets/bird.gif" alt="" /><span>条目编辑器</span></div>
+    <nav class="nav">
+      <a class="active" href="./index.html">编辑界面</a>
+      <a href="./admin.html">审核后台</a>
+      <a href="./contributors.html">贡献日志</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <div class="page-title"><img class="title-bird" src="./assets/bird.gif" alt="" /><span id="pageTitle">New Earth</span></div>
+    <div class="section-tabs primary-tabs" id="sectionTabs"></div>
+    <div class="viewbar">
+      <button class="view-chip active" data-view="table">▦ 全部数据</button>
+      <button class="view-chip" data-view="board">▥ 关系性</button>
+    </div>
+    <div class="toolbar">
+      <input id="searchInput" class="search" placeholder="搜索名称、传送门、备注、tag..." />
+      <span class="hint">光标移到条目左侧会出现 ＋，可新增条目；点击单元格可编辑条目</span>
+    </div>
+
+    <section id="tableView" class="db-shell"></section>
+    <section id="boardView" class="board-shell" hidden></section>
+  </main>
+
+  <div class="change-float" id="changeFloat" hidden>
+    <span id="changeSummary">有未提交的修改</span>
+    <button class="float-primary" id="openSubmitModal">提交</button>
+  </div>
+
+  <div class="modal-backdrop" id="submitModal" hidden>
+    <div class="modal contributor-modal">
+      <div class="modal-head">
+        <div>
+          <h2>信息登记</h2>
+          <p class="hint">以下信息用于贡献日志与主站贡献页展示。填写后会在主站贡献页署名展示；不想展示请点“匿名，跳过”</p>
+        </div>
+        <button class="icon-btn" id="closeSubmitModal">×</button>
+      </div>
+      <div class="contributor-form">
+        <label>昵称</label>
+        <input id="contributorName" class="text-input" />
+        <div class="avatar-label-row">
+          <label>头像</label>
+          <div class="avatar-mode-radios" role="radiogroup" aria-label="头像填写方式">
+            <button type="button" class="avatar-mode active" data-avatar-mode="url"><span class="radio-dot"></span>URL</button>
+            <button type="button" class="avatar-mode" data-avatar-mode="email"><span class="radio-dot"></span>邮箱</button>
+          </div>
+        </div>
+        <input id="avatarUrl" class="text-input" placeholder="以 https://... 格式粘贴" />
+        <input id="contributorEmail" class="text-input" placeholder="系统自动读取邮箱头像" hidden />
+        <div class="avatar-preview-row"><img id="avatarPreview" class="avatar" alt="头像预览" /><span class="hint">头像预览</span></div>
+        <div class="modal-actions">
+          <button class="inverse-btn" id="submitAnonymous">匿名，跳过</button>
+          <button class="blue-btn" id="submitWithInfo">提交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-mask" id="detailDrawer" hidden>
+    <aside class="detail-panel">
+      <div class="drawer-head">
+        <div>
+          <h2 id="detailTitle">条目</h2>
+          <p id="detailSubtitle" class="hint"></p>
+        </div>
+        <div class="drawer-actions"><button class="ghost-btn" id="closeDetail">关闭</button></div>
+      </div>
+      <div class="drawer-body" id="detailBody"></div>
+    </aside>
+  </div>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
