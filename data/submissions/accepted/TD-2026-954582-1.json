@@ -1,0 +1,94 @@
+{
+  "id": "TD-2026-954582-1",
+  "submissionId": "TD-2026-954582",
+  "createdAt": "2026-07-08T18:22:34.582Z",
+  "contributor": {
+    "name": "test",
+    "avatar": "https://cakebatter.neocities.org/decome%203/rando/38.gif",
+    "anonymous": false,
+    "show": true
+  },
+  "change": {
+    "kind": "new",
+    "section": "New Earth",
+    "position": {
+      "afterId": "new-earth-1",
+      "beforeId": "new-earth-2",
+      "afterName": "蝙蝠侠v1 436",
+      "beforeName": "孤独死亡之所"
+    },
+    "newData": {
+      "id": "add-1783534649030",
+      "section": "New Earth",
+      "name": "test",
+      "portal": "test",
+      "importance": [
+        "出场"
+      ],
+      "hanhua": [
+        "已汉化"
+      ],
+      "relations": [
+        "Dick"
+      ],
+      "notes": "112211",
+      "pageContent": "",
+      "pageContentRaw": "",
+      "order": 1.5
+    },
+    "changeId": "TD-2026-954582-1",
+    "status": "approved",
+    "reviewedAt": "2026-07-08T18:24:29.613Z"
+  },
+  "colors": {
+    "出场": "gray",
+    "主要出场": "blue",
+    "重要故事": "purple",
+    "大事件": "red",
+    "已汉化": "green",
+    "汉化不全": "orange",
+    "已出版": "blue",
+    "Dick": "blue",
+    "Steph": "orange",
+    "Helena": "purple",
+    "Bruce": "gray",
+    "Kon": "red",
+    "YJ": "yellow",
+    "Cass": "brown",
+    "TT": "green",
+    "Cassie": "orange",
+    "Diana": "red",
+    "Damian": "purple",
+    "Kara": "blue",
+    "Jason": "red"
+  },
+  "options": {
+    "importance": [
+      "出场",
+      "主要出场",
+      "重要故事",
+      "大事件"
+    ],
+    "hanhua": [
+      "已汉化",
+      "汉化不全",
+      "已出版"
+    ],
+    "relations": [
+      "Dick",
+      "Steph",
+      "Helena",
+      "Bruce",
+      "Kon",
+      "YJ",
+      "Cass",
+      "TT",
+      "Cassie",
+      "Diana",
+      "Damian",
+      "Kara",
+      "Jason"
+    ]
+  },
+  "reviewedAt": "2026-07-08T18:24:29.613Z"
+}
