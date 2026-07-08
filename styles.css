@@ -86,3 +86,4 @@
 .radio-dot{width:12px;height:12px;border:1px solid #aaa;border-radius:50%;display:inline-block;background:#fff;box-shadow:inset 0 0 0 2px #fff}
 .avatar-mode.active .radio-dot{background:#37352f;border-color:#37352f}
 .change-float{padding:9px 10px 9px 16px}
+.admin-section{margin-top:16px}.processed-section{margin-top:28px}.processed-section h2{font-size:20px;margin:0 0 8px}.admin-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.admin-actions{display:flex;gap:8px;margin-top:12px}.sub-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}

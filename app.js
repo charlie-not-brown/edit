@@ -370,14 +370,30 @@
 
   function draftCounts(){return {adds:(draft.adds||[]).length,edits:Object.keys(draft.edits||{}).filter(id=>!(draft.deletes||[]).includes(id)).length,deletes:(draft.deletes||[]).length}}
   function renderFloat(){const c=draftCounts(),n=c.adds+c.edits+c.deletes;$('#changeFloat').hidden=n===0;$('#changeSummary').textContent=`新增 ${c.adds} 条，修改 ${c.edits} 条，删除 ${c.deletes} 条`;}
-  function submitDraft(contributor){
+  async function submitDraft(contributor){
     const c=draftCounts(); if(c.adds+c.edits+c.deletes===0){alert('没有未提交的修改。');return;}
     const changes=[];
     (draft.adds||[]).forEach(a=>changes.push({kind:'new',section:a.section,position:{afterId:a.afterId,beforeId:a.beforeId,afterName:getBase(a.afterId)?.name||'',beforeName:getBase(a.beforeId)?.name||''},newData:a.data}));
     Object.keys(draft.edits||{}).forEach(id=>{if((draft.deletes||[]).includes(id))return; const old=getBase(id), neu=draft.edits[id]; const fs=fields.filter(f=>JSON.stringify(old?.[f]||'')!==JSON.stringify(neu?.[f]||'')); if(fs.length) changes.push({kind:'edit',targetId:id,section:old.section,oldData:old,newData:neu,fields:fs});});
     (draft.deletes||[]).forEach(id=>{const old=getBase(id); if(old) changes.push({kind:'delete',targetId:id,section:old.section,oldData:old,fields:['name']});});
-    const sub={id:'TD-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-6),createdAt:new Date().toISOString(),status:'pending',contributor,changes,colors,options};
-    const subs=getSubs(); subs.unshift(sub); setSubs(subs); draft={edits:{},adds:[],deletes:[]}; saveDraft(); $('#submitModal').hidden=true; window.location.href='success.html?id='+encodeURIComponent(sub.id);
+    const safeContributor={...(contributor||{})};
+    if(safeContributor.email){ safeContributor.email=''; }
+    const sub={id:'TD-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-6),createdAt:new Date().toISOString(),status:'pending',contributor:safeContributor,changes,colors,options};
+    sessionStorage.setItem('td_last_submission',JSON.stringify(sub));
+    $('#submitWithInfo').disabled=true; $('#submitAnonymous').disabled=true;
+    try{
+      const res=await fetch('./api/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(sub)});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok || !data.ok) throw new Error(data.error||'submit failed');
+      draft={edits:{},adds:[],deletes:[]}; saveDraft(); $('#submitModal').hidden=true;
+      sessionStorage.removeItem('td_last_submission');
+      window.location.href='success.html?id='+encodeURIComponent(data.id||sub.id);
+    }catch(err){
+      sessionStorage.setItem('td_failed_submission',JSON.stringify(sub));
+      window.location.href='fail.html?id='+encodeURIComponent(sub.id);
+    }finally{
+      $('#submitWithInfo').disabled=false; $('#submitAnonymous').disabled=false;
+    }
   }
   function seedTestSubmission(){
     const base=BASE.find(x=>x.section===currentSection)||BASE[0];
