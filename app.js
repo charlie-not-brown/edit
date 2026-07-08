@@ -10,6 +10,12 @@
   const fieldLabels={name:'名称',portal:'传送门',importance:'重要性',hanhua:'汉化',relations:'关系性',notes:'备注',pageContent:'页面内容'};
   const tagFields=['importance','hanhua','relations'];
   const palette=['default','gray','brown','orange','yellow','green','blue','purple','pink','red'];
+
+  const SECTION_ORDER=['New Earth','Prime Earth','其他','Other'];
+  function sectionRank(section){
+    const index=SECTION_ORDER.indexOf(section);
+    return index===-1?999:index;
+  }
   let published=loadJSON(STORAGE_PUBLISHED,{adds:[],edits:{},deletes:[]});
   published.adds=published.adds||[]; published.edits=published.edits||{}; published.deletes=published.deletes||[];
   let BASE=applyPublished(BASE_SOURCE,published);
@@ -18,7 +24,7 @@
   let options=mergeOptions(derived.options,loadJSON(STORAGE_OPT,window.TAG_OPTIONS||{}));
   let draft=loadJSON(STORAGE_DRAFT,{edits:{},adds:[],deletes:[]});
   draft.edits=draft.edits||{}; draft.adds=draft.adds||[]; draft.deletes=draft.deletes||[];
-  let currentSection='New Earth';
+  let currentSection=(sections()[0]||'New Earth');
   let currentView='table';
   let activeTag=null;
   let currentQuery='';
@@ -27,11 +33,6 @@
     'Prime Earth':'https://i.ibb.co/gLBFFvWM/49-EDC184-DF93-4-D7-A-96-AB-EE9-BA97454-A9.gif',
     '其他':'https://i.ibb.co/wFHVNpQT/383-BEE81-4153-44-B9-99-C2-528-F92-E00-CC0.gif'
   };
-  const SECTION_ORDER=['New Earth','Prime Earth','其他'];
-  function sectionRank(section){
-    const index=SECTION_ORDER.indexOf(section);
-    return index===-1?999:index;
-  }
 
   function loadJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k))||fallback}catch(e){return fallback}}
   function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
