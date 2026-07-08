@@ -16,7 +16,7 @@
   --w-relations:170px;
   --w-notes:300px;
 }
-.brand .bird-img,.title-bird{content:url('./assets/bird.gif') !important;}
+.brand .bird-img,.title-bird{content:url('https://i.ibb.co/NnYsfQcn/bird.gif') !important;}
 .section-icon{width:18px;height:18px;object-fit:contain;margin-right:6px;vertical-align:-4px;border-radius:3px}
 .col-name{width:var(--w-name)!important;min-width:var(--w-name)!important}
 .col-portal{width:var(--w-portal)!important;min-width:var(--w-portal)!important}

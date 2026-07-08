@@ -1,11 +1,22 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>审核后台 · 条目编辑器</title>
-<link rel="icon" href="./assets/bird.gif"><link rel="stylesheet" href="./styles.css"></head><body>
-<header class="topbar"><div class="brand"><img class="bird-img" src="./assets/bird.gif" alt="" /><span>审核后台</span></div><nav class="nav"><a href="./index.html">编辑界面</a><a class="active" href="./admin.html">审核后台</a><a href="./contributors.html">贡献日志</a></nav></header>
+<link rel="icon" href="https://i.ibb.co/NnYsfQcn/bird.gif"><link rel="stylesheet" href="./styles.css"></head><body>
+<header class="topbar"><div class="brand"><img class="bird-img" src="https://i.ibb.co/NnYsfQcn/bird.gif" alt="" /><span>审核后台</span></div><nav class="nav"><a href="./index.html">编辑界面</a><a class="active" href="./admin.html">审核后台</a><a href="./contributors.html">贡献日志</a></nav></header>
 <main class="page narrow"><h1>审核后台</h1><div id="loginBox" class="sub-card"><label>管理员密钥</label><input id="secret" class="text-input" ><button id="login" class="blue-btn" style="margin-top:10px">进入</button></div><div id="adminPanel" hidden><div class="dev-tools"><button class="mini-btn" id="cleanupOld">清理30天前已处理记录</button><span class="cleanup-note">正式部署时可改成自动定期清理。</span></div><div id="submissions"></div></div></main>
 <script>
-const KEY='td_contrib_submissions_v5'; const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s)); const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const KEY='td_contrib_submissions_v5'; const PUB_KEY='td_contrib_published_v11'; const OPT_KEY='td_contrib_tag_options_v5'; const COLOR_KEY='td_contrib_tag_colors_v5'; const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s)); const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const labels={name:'名称',portal:'传送门',importance:'重要性',hanhua:'汉化',relations:'关系性',notes:'备注',pageContent:'页面内容',pageContentRaw:'页面内容'};
 function getSubs(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return []}} function setSubs(v){localStorage.setItem(KEY,JSON.stringify(v))}
+function getJSON(k,f){try{return JSON.parse(localStorage.getItem(k))||f}catch(e){return f}} function setJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function mergeOptions(base,extra){const out={...(base||{})};Object.keys(extra||{}).forEach(k=>{out[k]=[...new Set([...(out[k]||[]),...((extra||{})[k]||[])])]});return out}
+function applyPublishedChange(ch,sub){
+  const pub=getJSON(PUB_KEY,{adds:[],edits:{},deletes:[]}); pub.adds=pub.adds||[]; pub.edits=pub.edits||{}; pub.deletes=pub.deletes||[];
+  if(ch.kind==='new'){const data={...(ch.newData||{})}; if(data.id&&!pub.adds.some(x=>x.id===data.id)) pub.adds.push(data);}
+  if(ch.kind==='edit'&&ch.targetId){pub.edits[ch.targetId]={...(ch.newData||{})};}
+  if(ch.kind==='delete'&&ch.targetId&&!pub.deletes.includes(ch.targetId)){pub.deletes.push(ch.targetId);}
+  setJSON(PUB_KEY,pub);
+  if(sub?.options) setJSON(OPT_KEY,mergeOptions(getJSON(OPT_KEY,{}),sub.options));
+  if(sub?.colors) setJSON(COLOR_KEY,{...getJSON(COLOR_KEY,{}),...sub.colors});
+}
 function tags(arr,colors={}){return (arr&&arr.length)?arr.map(t=>`<span class="tag tag-${colors[t]||'default'}">${esc(t)}</span>`).join(''):'<span class="empty">空</span>'}
 function val(v,colors){if(Array.isArray(v))return tags(v,colors); if((v||'').startsWith('<'))return '<span class="muted">页面内容 HTML</span>'; return esc(v||'')||'<span class="empty">空</span>'}
 function stateText(s){return {pending:'待审核',approved:'已通过',rejected:'已拒绝'}[s||'pending']||s}
@@ -18,7 +29,7 @@ function changeBody(ch,colors){
  if(ch.kind==='delete')return `<h3>删除条目：${esc(ch.oldData?.name||ch.targetId)}</h3><div class="new-position">通过后请手动在 Notion 正式库中删除/归档这一条。</div><table class="diff-table"><tr><td>名称</td><td class="diff-old">${esc(ch.oldData?.name||'')}</td></tr><tr><td>传送门</td><td class="diff-old">${val(ch.oldData?.portal,colors)}</td></tr></table>`;
  return `<h3>修改条目：${esc(ch.oldData?.name||ch.targetId)}</h3><table class="diff-table">${(ch.fields||[]).map(f=>`<tr><td>${esc(labels[f]||f)}</td><td class="diff-old">${val(ch.oldData?.[f],colors)}</td><td class="diff-new">${val(ch.newData?.[f],colors)}</td></tr>`).join('')}</table>`}
 function bindActions(){
-  $$('[data-status]').forEach(b=>b.onclick=()=>{const subs=getSubs(); const ch=subs[+b.dataset.i].changes[+b.dataset.j]; ch.status=b.dataset.status; ch.reviewedAt=new Date().toISOString(); const changes=subs[+b.dataset.i].changes||[]; subs[+b.dataset.i].status=changes.every(c=>c.status&&c.status!=='pending')?'reviewed':'pending'; setSubs(subs); render()});
+  $$('[data-status]').forEach(b=>b.onclick=()=>{const subs=getSubs(); const sub=subs[+b.dataset.i]; const ch=sub.changes[+b.dataset.j]; ch.status=b.dataset.status; ch.reviewedAt=new Date().toISOString(); if(b.dataset.status==='approved') applyPublishedChange(ch,sub); const changes=sub.changes||[]; sub.status=changes.every(c=>c.status&&c.status!=='pending')?'reviewed':'pending'; setSubs(subs); render()});
   $$('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy); alert('已复制。')}catch(e){prompt('复制这段内容：',b.dataset.copy)}});
 }
 function login(){if($('#secret').value==='tim1989'){$('#loginBox').hidden=true;$('#adminPanel').hidden=false;render()}else alert('密钥不对')}
