@@ -1,0 +1,86 @@
+{
+  "id": "TD-2026-208349-1",
+  "submissionId": "TD-2026-208349",
+  "createdAt": "2026-07-08T18:26:48.349Z",
+  "contributor": {
+    "name": "匿名贡献者",
+    "avatar": "",
+    "anonymous": true,
+    "show": false
+  },
+  "change": {
+    "kind": "new",
+    "section": "New Earth",
+    "position": {
+      "afterId": "new-earth-1",
+      "beforeId": "new-earth-2",
+      "afterName": "蝙蝠侠v1 436",
+      "beforeName": "孤独死亡之所"
+    },
+    "newData": {
+      "id": "add-1783535196717",
+      "section": "New Earth",
+      "name": "111",
+      "portal": "",
+      "importance": [],
+      "hanhua": [],
+      "relations": [],
+      "notes": "",
+      "pageContent": "",
+      "pageContentRaw": "",
+      "order": 1.5
+    },
+    "changeId": "TD-2026-208349-1",
+    "status": "pending"
+  },
+  "colors": {
+    "出场": "gray",
+    "主要出场": "blue",
+    "重要故事": "purple",
+    "大事件": "red",
+    "已汉化": "green",
+    "汉化不全": "orange",
+    "已出版": "blue",
+    "Dick": "blue",
+    "Steph": "orange",
+    "Helena": "purple",
+    "Bruce": "gray",
+    "Kon": "red",
+    "YJ": "yellow",
+    "Cass": "brown",
+    "TT": "green",
+    "Cassie": "orange",
+    "Diana": "red",
+    "Damian": "purple",
+    "Kara": "blue",
+    "Jason": "red"
+  },
+  "options": {
+    "importance": [
+      "出场",
+      "主要出场",
+      "重要故事",
+      "大事件"
+    ],
+    "hanhua": [
+      "已汉化",
+      "汉化不全",
+      "已出版"
+    ],
+    "relations": [
+      "Dick",
+      "Steph",
+      "Helena",
+      "Bruce",
+      "Kon",
+      "YJ",
+      "Cass",
+      "TT",
+      "Cassie",
+      "Diana",
+      "Damian",
+      "Kara",
+      "Jason"
+    ]
+  }
+}
