@@ -1,30 +1,19 @@
 (function(){
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const BASE_SOURCE=window.COMIC_DATA||[];
+  const BASE=window.COMIC_DATA||[];
   const STORAGE_SUB='td_contrib_submissions_v5';
   const STORAGE_DRAFT='td_contrib_draft_v5';
   const STORAGE_OPT='td_contrib_tag_options_v5';
   const STORAGE_COLORS='td_contrib_tag_colors_v5';
-  const STORAGE_PUBLISHED='td_contrib_published_v11';
   const fields=['name','portal','importance','hanhua','relations','notes','pageContent'];
   const fieldLabels={name:'名称',portal:'传送门',importance:'重要性',hanhua:'汉化',relations:'关系性',notes:'备注',pageContent:'页面内容'};
   const tagFields=['importance','hanhua','relations'];
   const palette=['default','gray','brown','orange','yellow','green','blue','purple','pink','red'];
-
-  const SECTION_ORDER=['New Earth','Prime Earth','其他','Other'];
-  function sectionRank(section){
-    const index=SECTION_ORDER.indexOf(section);
-    return index===-1?999:index;
-  }
-  let published=loadJSON(STORAGE_PUBLISHED,{adds:[],edits:{},deletes:[]});
-  published.adds=published.adds||[]; published.edits=published.edits||{}; published.deletes=published.deletes||[];
-  let BASE=applyPublished(BASE_SOURCE,published);
-  const derived=deriveTagDefaults(BASE);
-  let colors={...derived.colors,...loadJSON(STORAGE_COLORS,window.TAG_COLORS||{})};
-  let options=mergeOptions(derived.options,loadJSON(STORAGE_OPT,window.TAG_OPTIONS||{}));
+  let colors=loadJSON(STORAGE_COLORS,window.TAG_COLORS||{});
+  let options=loadJSON(STORAGE_OPT,window.TAG_OPTIONS||{});
   let draft=loadJSON(STORAGE_DRAFT,{edits:{},adds:[],deletes:[]});
   draft.edits=draft.edits||{}; draft.adds=draft.adds||[]; draft.deletes=draft.deletes||[];
-  let currentSection=(sections()[0]||'New Earth');
+  let currentSection=BASE[0]?.section||'New Earth';
   let currentView='table';
   let activeTag=null;
   let currentQuery='';
@@ -36,47 +25,13 @@
 
   function loadJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k))||fallback}catch(e){return fallback}}
   function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
-  function mergeOptions(base,extra){
-    const out={importance:[...(base.importance||[])],hanhua:[...(base.hanhua||[])],relations:[...(base.relations||[])]};
-    Object.keys(extra||{}).forEach(k=>{out[k]=[...new Set([...(out[k]||[]),...((extra||{})[k]||[])])]});
-    return out;
-  }
-  function deriveTagDefaults(data){
-    const options={importance:[],hanhua:[],relations:[]};
-    (data||[]).forEach(it=>tagFields.forEach(f=>(it[f]||[]).forEach(t=>{if(t&&!options[f].includes(t))options[f].push(t)})));
-    const known={
-      '出场':'gray','主要出场':'blue','重要故事':'purple','大事件':'red',
-      '已汉化':'green','无汉化':'gray','汉化不全':'orange','已出版':'blue',
-      'Bruce':'gray','Cass':'brown','Steph':'orange','Dick':'blue','Kon':'red','Helena':'purple','Barbara':'pink','YJ':'yellow','TT':'green','Cassie':'orange','Diana':'red','Damian':'purple','Kara':'blue','Jason':'red','Alfred':'brown','Clark':'blue'
-    };
-    const colors={}; let i=0;
-    Object.values(options).flat().forEach(t=>{colors[t]=known[t]||palette[i++%palette.length]});
-    return {options,colors};
-  }
-  function applyPublished(source,pub){
-    const deletes=new Set(pub?.deletes||[]);
-    let base=(source||[]).filter(x=>!deletes.has(x.id)).map(x=>pub?.edits?.[x.id]?{...clone(pub.edits[x.id]),_publishedEdit:true}:clone(x));
-    (pub?.adds||[]).forEach(a=>{if(a&&!base.some(x=>x.id===a.id))base.push(clone(a))});
-    return base.sort((a,b)=>sectionRank(a.section)-sectionRank(b.section) || ((a.order||0)-(b.order||0)));
-  }
-  function sameVal(a,b){return JSON.stringify(a??'')===JSON.stringify(b??'')}
-  function hasDiff(base,item){return fields.some(f=>!sameVal(base?.[f],item?.[f]))}
-  function setEdit(id,patch){
-    const base=getBase(id);
-    const merged={...clone(base),...(draft.edits[id]||{}),...patch};
-    if(!base || !hasDiff(base,merged)) delete draft.edits[id];
-    else draft.edits[id]=merged;
-  }
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
   function clone(o){return JSON.parse(JSON.stringify(o||{}))}
   function getSubs(){return loadJSON(STORAGE_SUB,[])}
   function setSubs(v){saveJSON(STORAGE_SUB,v)}
   function saveDraft(){saveJSON(STORAGE_DRAFT,draft);saveJSON(STORAGE_OPT,options);saveJSON(STORAGE_COLORS,colors)}
   function getBase(id){return BASE.find(x=>x.id===id)}
-  function sections(){
-    const found=[...new Set(BASE.map(x=>x.section))];
-    return SECTION_ORDER.filter(section=>found.includes(section)).concat(found.filter(section=>!SECTION_ORDER.includes(section)));
-  }
+  function sections(){return [...new Set(BASE.map(x=>x.section))]}
   function tagColor(t){return colors[t]||'default'}
   function tag(t,removable=false){return `<span class="tag tag-${tagColor(t)}">${esc(t)}${removable?`<span class="x" data-remove-tag="${esc(t)}">×</span>`:''}</span>`}
   function tags(arr,removable=false){return (arr&&arr.length)?arr.map(x=>tag(x,removable)).join(''):'<span class="empty">空</span>'}
@@ -118,7 +73,7 @@
   }
   function updateItem(id,patch){
     if(id.startsWith('add-')){const a=draft.adds.find(x=>x.id===id); if(a)a.data={...a.data,...patch};}
-    else setEdit(id,patch);
+    else{const base=getBase(id); draft.edits[id]={...clone(base),...(draft.edits[id]||{}),...patch};}
     saveDraft(); render();
   }
   function init(){
@@ -138,9 +93,10 @@
     $('#submitWithInfo').onclick=()=>{
       const name=$('#contributorName').value.trim();
       const mode=document.querySelector('.avatar-mode.active')?.dataset.avatarMode || 'url';
-      const email=mode==='email' ? $('#contributorEmail').value.trim() : '';
-      const avatar=mode==='email' ? (email ? gravatar(email) : '') : $('#avatarUrl').value.trim();
-      submitDraft({name:name||'未署名贡献者',avatar,email,show:!!(name||email||avatar),anonymous:false});
+      const rawEmail=mode==='email' ? $('#contributorEmail').value.trim() : '';
+      const avatar=mode==='email' ? (rawEmail ? gravatar(rawEmail) : '') : $('#avatarUrl').value.trim();
+      // 邮箱只用于生成头像地址，不写入投稿/贡献日志，避免公开邮箱明文。
+      submitDraft({name:name||'未署名贡献者',avatar,email:'',show:!!(name||rawEmail||avatar),anonymous:false});
       resetContributorForm();
     };
     $('#submitAnonymous').onclick=()=>{submitDraft({name:'匿名贡献者',avatar:'',email:'',show:false,anonymous:true}); resetContributorForm();};
@@ -291,7 +247,7 @@
   function htmlToText(html){const d=document.createElement('div');d.innerHTML=html||'';return d.textContent||''}
   function updateItemNoRender(id,patch){
     if(id.startsWith('add-')){const a=draft.adds.find(x=>x.id===id); if(a)a.data={...a.data,...patch};}
-    else setEdit(id,patch);
+    else{const base=getBase(id); draft.edits[id]={...clone(base),...(draft.edits[id]||{}),...patch};}
     saveDraft(); renderFloat();
   }
   function refreshMainOnly(){
@@ -326,7 +282,7 @@
   }
   function gravatar(email){
     const h=md5(String(email||'').trim().toLowerCase());
-    return h ? `https://cravatar.cn/avatar/${h}?d=identicon` : '';
+    return h ? `https://cravatar.cn/avatar/${h}?s=96&d=identicon` : '';
   }
   function updateAvatarPreview(){
     const img=$('#avatarPreview'); if(!img)return;
