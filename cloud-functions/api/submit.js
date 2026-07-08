@@ -35,11 +35,11 @@ function detailBlock(ch) {
   (ch.fields || []).forEach(f => lines.push(`${f}\n旧：${textOf(ch.oldData?.[f])}\n新：${textOf(ch.newData?.[f])}`));
   return lines.join('\n');
 }
-async function notifyFeishu(env, sub, records) {
-  if (!env.FEISHU_WEBHOOK) return;
+async function notifyQmsg(env, sub, records) {
+  if (!env.QMSG_KEY) return;
   const contributor = stripPrivateContributor(sub.contributor || {});
   const title = `小提漫画库有新提交：${sub.id}`;
-  const text = [
+  let content = [
     title,
     `提交时间：${new Date(sub.createdAt || Date.now()).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`,
     `贡献者：${contributor.anonymous ? '匿名' : contributor.name}`,
@@ -47,12 +47,29 @@ async function notifyFeishu(env, sub, records) {
     '',
     records.map(r => `# ${r.id}\n${detailBlock(r.change)}`).join('\n\n---\n\n')
   ].join('\n');
-  await fetch(env.FEISHU_WEBHOOK, {
+
+  // QQ 长消息和公共机器人风控都比较敏感。完整投稿已经保存到 GitHub pending，通知里保留摘要即可。
+  const limit = Number(env.QMSG_MAX_LENGTH || 3600);
+  if (content.length > limit) {
+    content = content.slice(0, limit) + '\n\n……内容较长，完整内容请到后台查看。';
+  }
+
+  const type = String(env.QMSG_TYPE || 'send').toLowerCase();
+  const endpoint = type === 'group' ? 'jgroup' : 'jsend';
+  const body = { msg: content };
+  if (env.QMSG_QQ) body.qq = env.QMSG_QQ;
+
+  const res = await fetch(`https://qmsg.zendee.cn/${endpoint}/${encodeURIComponent(env.QMSG_KEY)}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ msg_type: 'text', content: { text } })
+    body: JSON.stringify(body)
   });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.success === false) {
+    throw new Error(data.reason || data.msg || `Qmsg ${res.status}`);
+  }
 }
+
 
 export async function onRequestOptions() { return handleOptions(); }
 export async function onRequestPost({ request, env }) {
@@ -76,7 +93,7 @@ export async function onRequestPost({ request, env }) {
     for (const record of records) {
       await putJSON(env, `data/submissions/pending/${record.id}.json`, record, `chore: new submission ${record.id}`);
     }
-    await notifyFeishu(env, sub, records);
+    await notifyQmsg(env, sub, records);
     return json({ ok:true, id: sub.id, changes: records.map(r => r.id) });
   } catch (e) {
     return json({ ok:false, error:e.message || '提交失败' }, 500);
