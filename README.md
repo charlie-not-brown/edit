@@ -13,8 +13,8 @@
 1. 把每一条新增 / 修改 / 删除写入 GitHub 仓库的 `data/submissions/pending/*.json`。
 2. 发送飞书机器人通知。
 3. 管理员在 `admin.html` 里单条通过 / 拒绝。
-4. 通过后写入 `data/submissions/accepted/*.json`，并自动更新 `data/recent-changes.json`。
-5. `contributors.html` 会读取 `data/recent-changes.json` 并显示为「最近更新」。
+4. 通过后写入 `data/submissions/accepted/*.json`，并自动更新 `data/published.json` 与 `data/recent-changes.json`。
+5. `index.html` 会读取 `/api/published` 显示已通过的正式条目；`contributors.html` 会读取 `/api/logs` 并显示为「最近更新」。
 
 ## EdgeOne 部署结构
 
@@ -47,6 +47,7 @@ cloud-functions/api/
 ```text
 cloud-functions/api/submit.js        → /api/submit
 cloud-functions/api/logs.js          → /api/logs
+cloud-functions/api/published.js     → /api/published
 cloud-functions/api/admin/list.js    → /api/admin/list
 ```
 

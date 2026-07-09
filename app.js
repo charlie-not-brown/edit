@@ -11,15 +11,22 @@
   const tagFields=['importance','hanhua','relations'];
   const palette=['default','gray','brown','orange','yellow','green','blue','purple','pink','red'];
 
+  function normalizePublished(pub){
+    return {
+      adds:Array.isArray(pub?.adds)?pub.adds:[],
+      edits:(pub?.edits&&typeof pub.edits==='object')?pub.edits:{},
+      deletes:Array.isArray(pub?.deletes)?pub.deletes:[]
+    };
+  }
+
   const SECTION_ORDER=['New Earth','Prime Earth','其他','Other'];
   function sectionRank(section){
     const index=SECTION_ORDER.indexOf(section);
     return index===-1?999:index;
   }
-  let published=loadJSON(STORAGE_PUBLISHED,{adds:[],edits:{},deletes:[]});
-  published.adds=published.adds||[]; published.edits=published.edits||{}; published.deletes=published.deletes||[];
+  let published=normalizePublished(window.PUBLISHED_CHANGES||loadJSON(STORAGE_PUBLISHED,{adds:[],edits:{},deletes:[]}));
   let BASE=applyPublished(BASE_SOURCE,published);
-  const derived=deriveTagDefaults(BASE);
+  let derived=deriveTagDefaults(BASE);
   let colors={...derived.colors,...loadJSON(STORAGE_COLORS,window.TAG_COLORS||{})};
   let options=mergeOptions(derived.options,loadJSON(STORAGE_OPT,window.TAG_OPTIONS||{}));
   let draft=loadJSON(STORAGE_DRAFT,{edits:{},adds:[],deletes:[]});
@@ -121,8 +128,34 @@
     else setEdit(id,patch);
     saveDraft(); render();
   }
-  function init(){
+  async function init(){
     renderTabs(); bindGlobal(); render();
+    await refreshPublishedFromServer();
+  }
+  function rebuildBaseFromPublished(nextPublished){
+    published=normalizePublished(nextPublished);
+    BASE=applyPublished(BASE_SOURCE,published);
+    derived=deriveTagDefaults(BASE);
+    colors={...derived.colors,...loadJSON(STORAGE_COLORS,window.TAG_COLORS||{})};
+    options=mergeOptions(derived.options,loadJSON(STORAGE_OPT,window.TAG_OPTIONS||{}));
+    const available=sections();
+    if(!available.includes(currentSection)) currentSection=available[0]||'New Earth';
+  }
+  async function refreshPublishedFromServer(){
+    try{
+      const res=await fetch('./api/published?ts='+Date.now(),{cache:'no-store'});
+      if(!res.ok) return;
+      const data=await res.json().catch(()=>null);
+      const next=normalizePublished(data?.published||data);
+      const before=JSON.stringify(published);
+      const after=JSON.stringify(next);
+      if(before===after) return;
+      rebuildBaseFromPublished(next);
+      saveJSON(STORAGE_PUBLISHED,published);
+      renderTabs(); render();
+    }catch(e){
+      // 公开数据接口不可用时，保留 data.js 与本地缓存，不影响编辑。
+    }
   }
   function renderTabs(){
     $('#pageTitle').textContent=currentSection;
@@ -132,18 +165,17 @@
   function bindGlobal(){
     $$('.view-chip').forEach(b=>b.onclick=()=>{currentView=b.dataset.view; $$('.view-chip').forEach(x=>x.classList.toggle('active',x===b)); render();});
     $('#searchInput').oninput=e=>{currentQuery=e.target.value; render();};
-    $('#openSubmitModal').onclick=()=>{resetContributorForm();$('#submitModal').hidden=false;};
-    $('#closeSubmitModal').onclick=()=>$('#submitModal').hidden=true;
-    $('#submitModal').addEventListener('click',e=>{if(e.target.id==='submitModal')$('#submitModal').hidden=true;});
-    $('#submitWithInfo').onclick=()=>{
+    $('#openSubmitModal').onclick=()=>{resetContributorForm();$('#submitModal').dataset.loading='false';$('#submitModal').hidden=false;};
+    $('#closeSubmitModal').onclick=()=>{if($('#submitModal').dataset.loading!=='true') $('#submitModal').hidden=true;};
+    $('#submitModal').addEventListener('click',e=>{if(e.target.id==='submitModal'&&$('#submitModal').dataset.loading!=='true')$('#submitModal').hidden=true;});
+    $('#submitWithInfo').onclick=async()=>{
       const name=$('#contributorName').value.trim();
       const mode=document.querySelector('.avatar-mode.active')?.dataset.avatarMode || 'url';
       const email=mode==='email' ? $('#contributorEmail').value.trim() : '';
       const avatar=mode==='email' ? (email ? gravatar(email) : '') : $('#avatarUrl').value.trim();
-      submitDraft({name:name||'未署名贡献者',avatar,email,show:!!(name||email||avatar),anonymous:false});
-      resetContributorForm();
+      await submitDraft({name:name||'未署名贡献者',avatar,email,show:!!(name||email||avatar),anonymous:false});
     };
-    $('#submitAnonymous').onclick=()=>{submitDraft({name:'匿名贡献者',avatar:'',email:'',show:false,anonymous:true}); resetContributorForm();};
+    $('#submitAnonymous').onclick=async()=>{await submitDraft({name:'匿名贡献者',avatar:'',email:'',show:false,anonymous:true});};
     $('#contributorEmail').addEventListener('input',updateAvatarPreview);
     $('#avatarUrl').addEventListener('input',updateAvatarPreview);
     $$('.avatar-mode').forEach(btn=>btn.onclick=()=>setAvatarMode(btn.dataset.avatarMode));
@@ -152,7 +184,7 @@
     if($('#seedDemoSubmission')) $('#seedDemoSubmission').onclick=seedTestSubmission;
     $('#closeDetail').onclick=()=>$('#detailDrawer').hidden=true;
     $('#detailDrawer').addEventListener('click',e=>{if(e.target.id==='detailDrawer')$('#detailDrawer').hidden=true;});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'){activeTag=null;$('#submitModal').hidden=true;$('#detailDrawer').hidden=true;render();}});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){activeTag=null;if($('#submitModal').dataset.loading!=='true')$('#submitModal').hidden=true;$('#detailDrawer').hidden=true;render();}});
     document.addEventListener('click',e=>{if(activeTag && !e.target.closest('.tag-editor') && !e.target.closest('[data-tag-field]')){activeTag=null; render();}});
   }
   function render(){
@@ -368,6 +400,13 @@
     return hex(md51(unescape(encodeURIComponent(str))));
   }
 
+  function showSubmitLoading(){
+    const modal=$('#submitModal');
+    const box=$('#submitModal .contributor-modal');
+    if(!modal||!box) return;
+    modal.dataset.loading='true';
+    box.innerHTML=`<div class="submit-loading-panel"><img class="submit-loading-bird" src="https://i.ibb.co/NnYsfQcn/bird.gif" alt="" /><h2>请稍等…</h2><p class="hint">正在提交你的修改，请不要关闭页面。</p></div>`;
+  }
   function draftCounts(){return {adds:(draft.adds||[]).length,edits:Object.keys(draft.edits||{}).filter(id=>!(draft.deletes||[]).includes(id)).length,deletes:(draft.deletes||[]).length}}
   function renderFloat(){const c=draftCounts(),n=c.adds+c.edits+c.deletes;$('#changeFloat').hidden=n===0;$('#changeSummary').textContent=`新增 ${c.adds} 条，修改 ${c.edits} 条，删除 ${c.deletes} 条`;}
   async function submitDraft(contributor){
@@ -381,6 +420,7 @@
     const sub={id:'TD-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-6),createdAt:new Date().toISOString(),status:'pending',contributor:safeContributor,changes,colors,options};
     sessionStorage.setItem('td_last_submission',JSON.stringify(sub));
     $('#submitWithInfo').disabled=true; $('#submitAnonymous').disabled=true;
+    showSubmitLoading();
     try{
       const res=await fetch('./api/submit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(sub)});
       const data=await res.json().catch(()=>({}));
@@ -392,7 +432,9 @@
       sessionStorage.setItem('td_failed_submission',JSON.stringify(sub));
       window.location.href='fail.html?id='+encodeURIComponent(sub.id);
     }finally{
-      $('#submitWithInfo').disabled=false; $('#submitAnonymous').disabled=false;
+      const infoBtn=$('#submitWithInfo'), anonBtn=$('#submitAnonymous');
+      if(infoBtn) infoBtn.disabled=false;
+      if(anonBtn) anonBtn.disabled=false;
     }
   }
   function seedTestSubmission(){
@@ -400,5 +442,7 @@
     const sub={id:'TD-TEST-'+String(Date.now()).slice(-5),createdAt:new Date().toISOString(),status:'pending',contributor:{name:'测试贡献者',avatar:'',email:'',show:true},changes:[{kind:'new',section:currentSection,position:{afterId:base.id,beforeId:'',afterName:base.name,beforeName:''},newData:{id:'test-new',section:currentSection,name:'测试新增条目',portal:'详见页面内容',importance:['出场'],hanhua:['已汉化'],relations:['Dick'],notes:'测试新增。',pageContent:''}},{kind:'edit',targetId:base.id,section:base.section,oldData:base,newData:{...clone(base),notes:(base.notes||'')+'（测试修改）',relations:[...(base.relations||[]),'新tag']},fields:['notes','relations']}],colors,options};
     (sub.changes||[]).forEach((ch,i)=>{ch.changeId=sub.id+'-'+(i+1); ch.status='pending';}); const subs=getSubs(); subs.unshift(sub); setSubs(subs); alert('已生成一条测试投稿，可以打开 admin.html 查看。');
   }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden) refreshPublishedFromServer();});
+  window.addEventListener('focus',()=>refreshPublishedFromServer());
   init();
 })();

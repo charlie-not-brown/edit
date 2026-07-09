@@ -87,3 +87,25 @@
 .avatar-mode.active .radio-dot{background:#37352f;border-color:#37352f}
 .change-float{padding:9px 10px 9px 16px}
 .admin-section{margin-top:16px}.processed-section{margin-top:28px}.processed-section h2{font-size:20px;margin:0 0 8px}.admin-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}.admin-actions{display:flex;gap:8px;margin-top:12px}.sub-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+
+/* v12: submit loading state */
+.submit-loading-panel{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:42px 28px;
+}
+.submit-loading-bird{
+  width:42px;
+  height:42px;
+  object-fit:contain;
+  margin-bottom:12px;
+}
+.submit-loading-panel h2{
+  margin:0 0 10px;
+  font-size:24px;
+  color:#2f3437;
+}
