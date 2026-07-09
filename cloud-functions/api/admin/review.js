@@ -1,4 +1,6 @@
 import { json, handleOptions, getJSON, putJSON, deleteFile, checkAdmin, publicLogFromRecord } from '../../_lib.js';
+import { ensureRecordPublished } from '../../_published.js';
+
 export async function onRequestOptions() { return handleOptions(); }
 export async function onRequestPost({ request, env }) {
   try {
@@ -15,6 +17,7 @@ export async function onRequestPost({ request, env }) {
     record.change.reviewedAt = record.reviewedAt;
     if (decision === 'approved') {
       await putJSON(env, `data/submissions/accepted/${id}.json`, record, `chore: accept submission ${id}`);
+      await ensureRecordPublished(env, record, id);
       const logsFile = await getJSON(env, 'data/recent-changes.json', []);
       const logs = Array.isArray(logsFile.value) ? logsFile.value : [];
       const log = publicLogFromRecord(record);

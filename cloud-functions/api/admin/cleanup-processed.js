@@ -1,4 +1,5 @@
 import { json, handleOptions, listDir, getJSON, deleteFile, checkAdmin, isOlderThan } from '../../_lib.js';
+import { ensureRecordPublished } from '../../_published.js';
 
 export async function onRequestOptions() { return handleOptions(); }
 
@@ -12,6 +13,7 @@ export async function onRequestPost({ request, env }) {
     for (const f of files.filter(x => x.name.endsWith('.json'))) {
       const file = await getJSON(env, f.path, null);
       if (file.value && file.sha && isOlderThan(file.value, days)) {
+        await ensureRecordPublished(env, file.value, file.value.id || f.name);
         await deleteFile(env, f.path, file.sha, `chore: cleanup processed submission ${file.value.id || f.name}`);
         deleted.push(file.value.id || f.name);
       }
