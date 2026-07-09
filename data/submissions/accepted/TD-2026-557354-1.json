@@ -1,0 +1,92 @@
+{
+  "id": "TD-2026-557354-1",
+  "submissionId": "TD-2026-557354",
+  "createdAt": "2026-07-09T03:42:37.354Z",
+  "contributor": {
+    "name": "测试",
+    "avatar": "https://cakebatter.neocities.org/decome%203/rando/38.gif",
+    "anonymous": false,
+    "show": true
+  },
+  "change": {
+    "kind": "delete",
+    "targetId": "TD-2026-954582-1",
+    "section": "New Earth",
+    "oldData": {
+      "id": "TD-2026-954582-1",
+      "section": "New Earth",
+      "name": "test",
+      "portal": "test",
+      "importance": [
+        "出场"
+      ],
+      "hanhua": [
+        "已汉化"
+      ],
+      "relations": [
+        "Dick"
+      ],
+      "notes": "112211",
+      "pageContent": "",
+      "pageContentRaw": "",
+      "order": 1.5
+    },
+    "fields": [
+      "name"
+    ],
+    "changeId": "TD-2026-557354-1",
+    "status": "approved",
+    "reviewedAt": "2026-07-09T03:43:13.206Z"
+  },
+  "colors": {
+    "出场": "gray",
+    "主要出场": "blue",
+    "重要故事": "purple",
+    "大事件": "red",
+    "已汉化": "green",
+    "汉化不全": "orange",
+    "已出版": "blue",
+    "Dick": "blue",
+    "Steph": "orange",
+    "Helena": "purple",
+    "Bruce": "gray",
+    "Kon": "red",
+    "YJ": "yellow",
+    "Cass": "brown",
+    "TT": "green",
+    "Cassie": "orange",
+    "Diana": "red",
+    "Damian": "purple",
+    "Kara": "blue",
+    "Jason": "red"
+  },
+  "options": {
+    "importance": [
+      "出场",
+      "主要出场",
+      "重要故事",
+      "大事件"
+    ],
+    "hanhua": [
+      "已汉化",
+      "汉化不全",
+      "已出版"
+    ],
+    "relations": [
+      "Dick",
+      "Steph",
+      "Helena",
+      "Bruce",
+      "Kon",
+      "YJ",
+      "Cass",
+      "TT",
+      "Cassie",
+      "Diana",
+      "Damian",
+      "Kara",
+      "Jason"
+    ]
+  },
+  "reviewedAt": "2026-07-09T03:43:13.206Z"
+}
