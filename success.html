@@ -1,103 +1,34 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>审核后台 · 条目编辑器</title>
-  <link rel="icon" href="https://i.ibb.co/NnYsfQcn/bird.gif">
-  <link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>提交成功 · 条目编辑器</title>
+  <link rel="icon" href="https://i.ibb.co/NnYsfQcn/bird.gif" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
-<body>
-<header class="topbar"><div class="brand"><img class="bird-img" src="https://i.ibb.co/NnYsfQcn/bird.gif" alt="" /><span>审核后台</span></div><nav class="nav"><a href="./index.html">编辑界面</a><a class="active" href="./admin.html">审核后台</a><a href="./contributors.html">最近更新</a></nav></header>
-<main class="page narrow">
-  <h1>审核后台</h1>
-  <div id="loginBox" class="sub-card"><label>管理员密钥</label><input id="secret" class="text-input" type="password"><button id="login" class="blue-btn" style="margin-top:10px">进入</button></div>
-  <div id="adminPanel" hidden>
-    <section class="admin-section">
-      <div class="admin-toolbar"><button class="mini-btn" id="refreshList">刷新待审核</button><span class="hint" id="adminHint">从 GitHub pending 文件读取。</span></div>
-      <div id="submissions"><div class="sub-card muted">读取中……</div></div>
-    </section>
-
-    <section class="admin-section processed-section">
-      <h2>已处理申请</h2>
-      <div class="admin-toolbar"><button class="mini-btn" id="refreshProcessed">刷新已处理</button><button class="mini-btn danger" id="cleanupProcessed">清理 30 天前已处理申请</button><span class="hint">只删除 accepted 里的提交记录，不影响最近更新、条目数据或 Notion。</span></div>
-      <div id="processedSubmissions"><div class="sub-card muted">读取中……</div></div>
-    </section>
-  </div>
-</main>
-<script>
-const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const labels={name:'名称',portal:'传送门',importance:'重要性',hanhua:'汉化',relations:'关系性',notes:'备注',pageContent:'页面内容',pageContentRaw:'页面内容'};
-let SECRET='';
-function tags(arr,colors={}){return (arr&&arr.length)?arr.map(t=>`<span class="tag tag-${colors[t]||'default'}">${esc(t)}</span>`).join(''):'<span class="empty">空</span>'}
-function val(v,colors){if(Array.isArray(v))return tags(v,colors); if((v||'').startsWith('<'))return '<span class="muted">页面内容 HTML</span>'; return esc(v||'')||'<span class="empty">空</span>'}
-function kindText(k){return k==='new'?'新增条目':(k==='delete'?'删除条目':'修改条目')}
-function contributor(item){const c=item.contributor||{}; return c.anonymous?'匿名':(c.name||'未署名贡献者')}
-async function api(path,body){
-  const res=await fetch(path,{method:body?'POST':'GET',headers:{'content-type':'application/json','x-admin-secret':SECRET},body:body?JSON.stringify(body):undefined,cache:'no-store'});
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok||data.ok===false) throw new Error(data.error||'请求失败');
-  return data;
-}
-async function load(){
-  $('#submissions').innerHTML='<div class="sub-card muted">读取中……</div>';
-  try{const data=await api('./api/admin/list'); renderPending(data.items||[]);}catch(e){$('#submissions').innerHTML='<div class="sub-card muted">读取失败：'+esc(e.message)+'</div>';}
-}
-async function loadProcessed(){
-  $('#processedSubmissions').innerHTML='<div class="sub-card muted">读取中……</div>';
-  try{const data=await api('./api/admin/processed'); renderProcessed(data.items||[]);}catch(e){$('#processedSubmissions').innerHTML='<div class="sub-card muted">读取失败：'+esc(e.message)+'</div>';}
-}
-function renderPending(items){
-  $('#submissions').innerHTML=items.length?items.map(item=>card(item,'pending')).join(''):'<div class="sub-card muted">暂无待审核投稿。</div>';
-  bindActions();
-}
-function renderProcessed(items){
-  $('#processedSubmissions').innerHTML=items.length?items.map(item=>card(item,'processed')).join(''):'<div class="sub-card muted">暂无已处理申请。</div>';
-  bindActions();
-}
-function card(item,mode){
-  const ch=item.change||{}; const colors=item.colors||{};
-  const time = mode==='processed' ? (item.reviewedAt || item.createdAt) : item.createdAt;
-  const statusText = mode==='processed' ? '已通过' : '待审核';
-  const actions = mode==='pending'
-    ? `<div class="admin-actions"><button class="mini-btn" data-review="approved" data-id="${esc(item.id)}">通过</button><button class="mini-btn danger" data-review="rejected" data-id="${esc(item.id)}">拒绝</button></div>`
-    : `<div class="admin-actions"><button class="mini-btn danger" data-delete-processed="${esc(item.id)}">删除这条已处理申请</button></div>`;
-  return `<div class="sub-card"><div class="sub-head"><div><b>${esc(item.id)}</b><div class="hint">${time?new Date(time).toLocaleString():''} · ${esc(contributor(item))} · ${esc(kindText(ch.kind))} · ${statusText}</div></div>${contribCopy(item)}</div>${changeBody(ch,colors)}${actions}</div>`;
-}
-function contribCopy(item){const c=item.contributor||{}; if(c.anonymous||!c.show)return ''; const text=`贡献者：${c.name||'未署名贡献者'}\n头像：${c.avatar||'(无)'}\n投稿编号：${item.submissionId||item.id}`; return `<button class="mini-btn" data-copy="${esc(text)}">复制贡献者信息</button>`}
-function changeBody(ch,colors){
- if(ch.kind==='new')return `<h3>新增条目</h3><div class="new-position">建议位置：${esc(ch.position?.afterName||'开头')} 之后${ch.position?.beforeName?'，'+esc(ch.position.beforeName)+' 之前':''}</div><table class="diff-table">${Object.entries(ch.newData||{}).filter(([k])=>!['id','section','order','portalLinks'].includes(k)).map(([k,v])=>`<tr><td>${esc(labels[k]||k)}</td><td class="diff-new">${val(v,colors)}</td></tr>`).join('')}</table>`;
- if(ch.kind==='delete')return `<h3>删除条目：${esc(ch.oldData?.name||ch.targetId)}</h3><div class="new-position">通过后请手动在 Notion 正式库中删除/归档这一条。</div><table class="diff-table"><tr><td>名称</td><td class="diff-old">${esc(ch.oldData?.name||'')}</td></tr><tr><td>传送门</td><td class="diff-old">${val(ch.oldData?.portal,colors)}</td></tr></table>`;
- return `<h3>修改条目：${esc(ch.oldData?.name||ch.targetId)}</h3><table class="diff-table">${(ch.fields||[]).map(f=>`<tr><td>${esc(labels[f]||f)}</td><td class="diff-old">${val(ch.oldData?.[f],colors)}</td><td class="diff-new">${val(ch.newData?.[f],colors)}</td></tr>`).join('')}</table>`;
-}
-function bindActions(){
-  $$('[data-review]').forEach(btn=>btn.onclick=async()=>{
-    const decision=btn.dataset.review; const id=btn.dataset.id;
-    if(decision==='rejected'&&!confirm('确认拒绝并从 GitHub pending 中移除这条投稿？')) return;
-    btn.disabled=true; btn.textContent='处理中…';
-    try{await api('./api/admin/review',{id,decision}); await load(); await loadProcessed();}
-    catch(e){alert('处理失败：'+e.message); btn.disabled=false; btn.textContent=decision==='approved'?'通过':'拒绝';}
-  });
-  $$('[data-delete-processed]').forEach(btn=>btn.onclick=async()=>{
-    const id=btn.dataset.deleteProcessed;
-    if(!confirm('确认删除这条已处理申请？\n只会删除 data/submissions/accepted 里的提交记录，不会删除最近更新，也不会影响条目数据。')) return;
-    btn.disabled=true; btn.textContent='删除中…';
-    try{await api('./api/admin/delete-processed',{id}); await loadProcessed();}
-    catch(e){alert('删除失败：'+e.message); btn.disabled=false; btn.textContent='删除这条已处理申请';}
-  });
-  $$('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy); alert('已复制。')}catch(e){prompt('复制这段内容：',b.dataset.copy)}});
-}
-async function cleanupProcessed(){
-  if(!confirm('确认清理 30 天前的已处理申请？\n这只删除 accepted 提交记录，不影响最近更新、条目数据或 Notion。')) return;
-  const btn=$('#cleanupProcessed'); btn.disabled=true; btn.textContent='清理中…';
-  try{const data=await api('./api/admin/cleanup-processed',{days:30}); alert(`已清理 ${data.count||0} 条。`); await loadProcessed();}
-  catch(e){alert('清理失败：'+e.message)}
-  finally{btn.disabled=false; btn.textContent='清理 30 天前已处理申请';}
-}
-function login(){SECRET=$('#secret').value.trim(); if(!SECRET){alert('请输入密钥');return;} sessionStorage.setItem('td_admin_secret',SECRET); $('#loginBox').hidden=true; $('#adminPanel').hidden=false; load(); loadProcessed();}
-$('#login').onclick=login; $('#secret').addEventListener('keydown',e=>{if(e.key==='Enter')login()}); $('#refreshList').onclick=load; $('#refreshProcessed').onclick=loadProcessed; $('#cleanupProcessed').onclick=cleanupProcessed;
-const saved=sessionStorage.getItem('td_admin_secret'); if(saved){$('#secret').value=saved;}
-</script>
+<body class="success-page">
+  <main class="success-main">
+    <img class="success-bird" src="https://i.ibb.co/NnYsfQcn/bird.gif" alt="" />
+    <h1>感谢你对小提漫画库的添砖加瓦！</h1>
+    <div class="success-id">提交编号：<span id="successId">TD-----</span></div>
+    <p>已提交至后台审核，如未选择匿名，通过后会记录在主站贡献页中</p>
+    <a class="success-link" href="./index.html">返回编辑器</a>
+  </main>
+  <script>
+    const id = new URLSearchParams(location.search).get('id') || 'TD-----';
+    document.getElementById('successId').textContent = id;
+    const colors=['#ffd9e6','#cde9ff','#d6f5df','#fff0b8','#e8d8ff','#ffcfc7'];
+    for(let i=0;i<70;i++){
+      const p=document.createElement('i');
+      p.className='confetti';
+      p.style.left=Math.random()*100+'vw';
+      p.style.background=colors[i%colors.length];
+      p.style.animationDelay=(Math.random()*1.4)+'s';
+      p.style.transform='rotate('+Math.random()*360+'deg)';
+      p.style.borderRadius=(i%3===0?'50%':'2px');
+      document.body.appendChild(p);
+    }
+  </script>
 </body>
 </html>
