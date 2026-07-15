@@ -1,0 +1,55 @@
+{
+  "红罗宾": {
+    "type": "image",
+    "container": [
+      {
+        "icon": "<img src=\"https://i.ibb.co/PscHFkdh/39496570-2-2026-07-14-13-01-54.webp\">",
+        "text": "嗨"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/RnBz4Nr/39496570-2026-07-14-13-06-50.webp\">",
+        "text": "点赞"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/gZy1FWD3/39496570-2026-07-14-13-02-29.webp\">",
+        "text": "笑"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/MkFB5XM6/39496570-2026-07-14-13-07-04.webp\">",
+        "text": "生气"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/NndTd1QS/39496570-2026-07-14-13-06-24.webp\">",
+        "text": "无语"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/39tfBP2y/39496570-2026-07-14-13-03-59.webp\">",
+        "text": "摸摸头"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/p6Q6RzSG/39496570-2026-07-14-13-04-29.webp\">",
+        "text": "疑惑"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/5XVvYH3k/39496570-2026-07-14-13-06-05.webp\">",
+        "text": "墨镜反光"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/sJ28FJRJ/39496570-2026-07-14-13-06-14.webp\">",
+        "text": "摘下墨镜"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/35hr2z89/39496570-2026-07-14-12-59-20.webp\">",
+        "text": "德雷克总裁包了"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/Zp10M90k/39496570-2026-07-14-13-06-44.webp\">",
+        "text": "大脑过载"
+      },
+      {
+        "icon": "<img src=\"https://i.ibb.co/nq0nV6Lf/39496570-2026-07-14-12-59-42.webp\">",
+        "text": "摇可乐"
+      }
+    ]
+  }
+}
